@@ -20,7 +20,7 @@ function haversineDistance(a: TrackPoint, b: TrackPoint): number {
 }
 
 // ─── Speedometer ─────────────────────────────────────────────────────────────
-function Speedometer({ speed, max = 240 }: { speed: number; max?: number }) {
+function Speedometer({ speed, max = 75 }: { speed: number; max?: number }) {
   const clamped = Math.min(speed, max);
   const pct = clamped / max;
   const START = 160, SWEEP = 220, R = 88, CX = 110, CY = 110;
@@ -34,7 +34,7 @@ function Speedometer({ speed, max = 240 }: { speed: number; max?: number }) {
 
   const needleDeg = START + SWEEP * pct - 90;
   const nRad = (needleDeg * Math.PI) / 180;
-  const speedColor = speed > 160 ? "#ff453a" : speed > 100 ? "#ff9f0a" : "#0a84ff";
+  const speedColor = speed > 60 ? "#ff453a" : speed > 45 ? "#ff9f0a" : "#0a84ff";
 
   return (
     <svg viewBox="0 0 220 220" className="w-full h-full">
@@ -56,7 +56,7 @@ function Speedometer({ speed, max = 240 }: { speed: number; max?: number }) {
         const deg = START+(SWEEP/24)*i-90, rad=(deg*Math.PI)/180, maj=i%4===0;
         return <line key={i} x1={CX+(maj?72:79)*Math.cos(rad)} y1={CY+(maj?72:79)*Math.sin(rad)} x2={CX+86*Math.cos(rad)} y2={CY+86*Math.sin(rad)} stroke={maj?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.12)"} strokeWidth={maj?1.5:1}/>;
       })}
-      {[0,60,120,180,240].map(val => {
+      {[0,15,30,45,60,75].map(val => {
         const deg = START+(SWEEP*(val/max))-90, rad=(deg*Math.PI)/180;
         return <text key={val} x={CX+62*Math.cos(rad)} y={CY+62*Math.sin(rad)} textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="-apple-system,system-ui">{val}</text>;
       })}
@@ -165,7 +165,7 @@ export default function SpeedTracker() {
     { label:"STRECKE",  value: fmtDist(distance) },
     { label:"ZEIT",     value: fmt(elapsed) },
     { label:"Ø KM/H",  value: avg.toFixed(1),      accent:"#0a84ff" },
-    { label:"MAX",      value: maxSpeed.toFixed(1), accent: maxSpeed>160?"#ff453a":maxSpeed>100?"#ff9f0a":"#30d158" },
+    { label:"MAX",      value: maxSpeed.toFixed(1), accent: maxSpeed>60?"#ff453a":maxSpeed>45?"#ff9f0a":"#30d158" },
   ];
 
   const header = (
