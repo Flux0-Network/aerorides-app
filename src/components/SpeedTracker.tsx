@@ -49,14 +49,11 @@ function Speedometer({ speed, max = 240 }: { speed: number; max?: number }) {
           <stop offset="100%" stopColor="#ff453a"/>
         </linearGradient>
       </defs>
-
       <circle cx={CX} cy={CY} r="105" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
       <path d={arcPath(R, START, SWEEP)} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="12" strokeLinecap="round"/>
-      {pct > 0 && (
-        <path d={arcPath(R, START, SWEEP * pct)} fill="none" stroke="url(#ag)" strokeWidth="12" strokeLinecap="round" filter="url(#glow)" style={{transition:"all 0.2s"}}/>
-      )}
+      {pct > 0 && <path d={arcPath(R, START, SWEEP * pct)} fill="none" stroke="url(#ag)" strokeWidth="12" strokeLinecap="round" filter="url(#glow)" style={{transition:"all 0.2s"}}/>}
       {Array.from({length:25},(_,i) => {
-        const deg = START + (SWEEP/24)*i - 90, rad = (deg*Math.PI)/180, maj = i%4===0;
+        const deg = START+(SWEEP/24)*i-90, rad=(deg*Math.PI)/180, maj=i%4===0;
         return <line key={i} x1={CX+(maj?72:79)*Math.cos(rad)} y1={CY+(maj?72:79)*Math.sin(rad)} x2={CX+86*Math.cos(rad)} y2={CY+86*Math.sin(rad)} stroke={maj?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.12)"} strokeWidth={maj?1.5:1}/>;
       })}
       {[0,60,120,180,240].map(val => {
@@ -135,78 +132,74 @@ export default function SpeedTracker() {
 
   return (
     <div
-      className="flex flex-col overflow-hidden"
-      style={{
-        width: "100dvw",
-        height: "100dvh",
-        background: "#000",
-        fontFamily: "-apple-system, SF Pro Display, system-ui",
-      }}
+      className="flex flex-row overflow-hidden"
+      style={{ width:"100dvw", height:"100dvh", background:"#000", fontFamily:"-apple-system,SF Pro Display,system-ui" }}
     >
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between shrink-0" style={{padding:"14px 20px 0"}}>
-        <div>
-          <p style={{color:"white",fontSize:17,fontWeight:600,letterSpacing:"-0.4px"}}>Aerorides</p>
-          <div className="flex items-center gap-1.5" style={{marginTop:2}}>
-            <div style={{width:5,height:5,borderRadius:"50%",background:tracking?"#30d158":"rgba(255,255,255,0.2)",boxShadow:tracking?"0 0 5px #30d158":"none",transition:"all 0.4s"}}/>
-            <p style={{color:"rgba(255,255,255,0.3)",fontSize:11,letterSpacing:"0.06em"}}>{tracking?"GPS AKTIV":"BEREIT"}</p>
+      {/* ── LEFT: Tacho-Panel ── */}
+      <div
+        className="flex flex-col items-center justify-between shrink-0"
+        style={{ width:"42%", height:"100%", borderRight:"1px solid rgba(255,255,255,0.07)", padding:"16px 14px" }}
+      >
+        {/* Header */}
+        <div className="w-full flex items-center justify-between">
+          <div>
+            <p style={{ color:"white", fontSize:15, fontWeight:600, letterSpacing:"-0.3px" }}>Aerorides</p>
+            <div className="flex items-center gap-1.5" style={{ marginTop:2 }}>
+              <div style={{ width:5, height:5, borderRadius:"50%", background:tracking?"#30d158":"rgba(255,255,255,0.18)", boxShadow:tracking?"0 0 5px #30d158":"none", transition:"all 0.4s" }}/>
+              <p style={{ color:"rgba(255,255,255,0.28)", fontSize:10, letterSpacing:"0.07em" }}>{tracking?"GPS AKTIV":"BEREIT"}</p>
+            </div>
+          </div>
+          <button
+            onClick={tracking ? stopTracking : startTracking}
+            style={{ background:tracking?"rgba(255,69,58,0.15)":"rgba(10,132,255,0.15)", border:`1px solid ${tracking?"rgba(255,69,58,0.35)":"rgba(10,132,255,0.35)"}`, color:tracking?"#ff453a":"#0a84ff", borderRadius:20, padding:"7px 16px", fontSize:12, fontWeight:500, cursor:"pointer", transition:"all 0.2s" }}
+          >
+            {tracking ? "Stop" : "Start"}
+          </button>
+        </div>
+
+        {/* Speedometer */}
+        <div className="relative flex items-center justify-center" style={{ flex:1, width:"100%", padding:"8px 0" }}>
+          <div className="absolute rounded-full" style={{ width:220, height:220, background:tracking?"radial-gradient(circle,rgba(10,132,255,0.13) 0%,transparent 68%)":"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 68%)", transition:"background 1s" }}/>
+          <div style={{ width:"min(100%,200px)", aspectRatio:"1" }}>
+            <Speedometer speed={speed}/>
           </div>
         </div>
-        <button
-          onClick={tracking ? stopTracking : startTracking}
-          style={{
-            background: tracking ? "rgba(255,69,58,0.15)" : "rgba(10,132,255,0.15)",
-            border: `1px solid ${tracking ? "rgba(255,69,58,0.35)" : "rgba(10,132,255,0.35)"}`,
-            color: tracking ? "#ff453a" : "#0a84ff",
-            borderRadius: 22, padding: "9px 22px",
-            fontSize: 14, fontWeight: 500, cursor: "pointer",
-            letterSpacing: "0.01em", transition: "all 0.2s",
-          }}
-        >
-          {tracking ? "Stop" : "Start"}
-        </button>
-      </div>
 
-      {/* ── Speedometer ── */}
-      <div className="relative flex items-center justify-center shrink-0" style={{padding:"4px 0 0"}}>
-        <div className="absolute rounded-full" style={{width:260,height:260,background:tracking?"radial-gradient(circle,rgba(10,132,255,0.14) 0%,transparent 68%)":"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 68%)",transition:"background 1s"}}/>
-        <div style={{width:210,height:210}}>
-          <Speedometer speed={speed}/>
+        {/* Stats 2×2 */}
+        <div className="grid grid-cols-2 w-full" style={{ gap:7 }}>
+          {[
+            { label:"STRECKE",  value: fmtDist(distance) },
+            { label:"ZEIT",     value: fmt(elapsed) },
+            { label:"Ø KM/H",  value: avg.toFixed(1),      accent:"#0a84ff" },
+            { label:"MAX",      value: maxSpeed.toFixed(1), accent: maxSpeed>160?"#ff453a":maxSpeed>100?"#ff9f0a":"#30d158" },
+          ].map(({ label, value, accent }) => (
+            <div key={label} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"10px 12px" }}>
+              <p style={{ color:"rgba(255,255,255,0.32)", fontSize:9, letterSpacing:"0.09em", marginBottom:5 }}>{label}</p>
+              <p style={{ color:accent??"white", fontSize:20, fontWeight:300, letterSpacing:"-0.8px", lineHeight:1 }}>{value}</p>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-4 shrink-0" style={{padding:"0 14px",gap:8}}>
-        {[
-          { label: "STRECKE", value: fmtDist(distance) },
-          { label: "ZEIT", value: fmt(elapsed) },
-          { label: "Ø KM/H", value: avg.toFixed(1), accent: "#0a84ff" },
-          { label: "MAX", value: maxSpeed.toFixed(1), accent: maxSpeed>160?"#ff453a":maxSpeed>100?"#ff9f0a":"#30d158" },
-        ].map(({ label, value, accent }) => (
-          <div key={label} className="flex flex-col items-center justify-center" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"10px 4px"}}>
-            <p style={{color:"rgba(255,255,255,0.35)",fontSize:9,letterSpacing:"0.08em",marginBottom:4}}>{label}</p>
-            <p style={{color:accent??"white",fontSize:15,fontWeight:300,letterSpacing:"-0.5px",lineHeight:1,textAlign:"center"}}>{value}</p>
+        {/* Error */}
+        {error && (
+          <div style={{ width:"100%", marginTop:6, background:"rgba(255,69,58,0.1)", border:"1px solid rgba(255,69,58,0.3)", borderRadius:12, padding:"8px 12px", color:"#ff453a", fontSize:11 }}>
+            {error}
           </div>
-        ))}
+        )}
       </div>
 
-      {/* ── Error ── */}
-      {error && (
-        <div className="shrink-0 mx-4 mt-2" style={{background:"rgba(255,69,58,0.1)",border:"1px solid rgba(255,69,58,0.3)",borderRadius:12,padding:"10px 14px",color:"#ff453a",fontSize:12}}>
-          {error}
-        </div>
-      )}
+      {/* ── RIGHT: Map ── */}
+      <div className="relative flex-1 h-full">
+        <RouteMap points={routePoints} current={currentPos}/>
 
-      {/* ── Map ── */}
-      <div className="relative flex-1 overflow-hidden" style={{margin:"10px 14px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,0.07)"}}>
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-none" style={{background:"rgba(0,0,0,0.65)",borderRadius:10,padding:"5px 10px",backdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.08)"}}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:"#0a84ff",boxShadow:"0 0 5px #0a84ff"}}/>
-          <span style={{color:"rgba(255,255,255,0.55)",fontSize:11,letterSpacing:"0.06em"}}>ROUTE</span>
+        {/* Route badge */}
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-none" style={{ background:"rgba(0,0,0,0.65)", borderRadius:10, padding:"5px 10px", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ width:6, height:6, borderRadius:"50%", background:"#0a84ff", boxShadow:"0 0 5px #0a84ff" }}/>
+          <span style={{ color:"rgba(255,255,255,0.55)", fontSize:11, letterSpacing:"0.06em" }}>ROUTE</span>
           {routePoints.length > 0 && (
-            <span style={{color:"rgba(255,255,255,0.25)",fontSize:10}}>{routePoints.length} Pkt.</span>
+            <span style={{ color:"rgba(255,255,255,0.28)", fontSize:10 }}>{routePoints.length} Pkt.</span>
           )}
         </div>
-        <RouteMap points={routePoints} current={currentPos}/>
       </div>
     </div>
   );
