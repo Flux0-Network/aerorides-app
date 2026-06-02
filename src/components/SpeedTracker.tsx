@@ -143,8 +143,8 @@ export default function SpeedTracker() {
         if (lastPoint.current) {
           const d = haversineDistance(lastPoint.current, pt);
           const dt = (pt.timestamp - lastPoint.current.timestamp) / 1000;
-          if (dt > 0 && d < 500) {
-            const kmh = (d / dt) * 3.6;
+          if (dt > 0 && d < 100) {
+            const kmh = Math.min((d / dt) * 3.6, 75);
             setSpeed(kmh); setMaxSpeed((p) => Math.max(p, kmh)); setDistance((p) => p + d);
           }
         }
