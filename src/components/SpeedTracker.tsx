@@ -170,11 +170,28 @@ export default function SpeedTracker() {
 
   const header = (
     <div className="flex items-center justify-between w-full shrink-0" style={{ padding: landscape ? "16px 14px 0" : "14px 20px 0" }}>
-      <div>
-        <p style={{ color:"white", fontSize: landscape ? 15 : 17, fontWeight:600, letterSpacing:"-0.3px" }}>Aerorides</p>
-        <div className="flex items-center gap-1.5" style={{ marginTop:2 }}>
-          <div style={{ width:5, height:5, borderRadius:"50%", background:tracking?"#30d158":"rgba(255,255,255,0.18)", boxShadow:tracking?"0 0 5px #30d158":"none", transition:"all 0.4s" }}/>
-          <p style={{ color:"rgba(255,255,255,0.28)", fontSize:10, letterSpacing:"0.07em" }}>{tracking?"GPS AKTIV":"BEREIT"}</p>
+      <div className="flex items-center gap-2.5">
+        {/* Logo */}
+        <svg width={landscape ? 28 : 32} height={landscape ? 28 : 32} viewBox="0 0 100 100" fill="none">
+          <defs>
+            <linearGradient id="hgl" x1="50%" y1="0%" x2="10%" y2="100%">
+              <stop offset="0%" stopColor="#2196F3"/>
+              <stop offset="100%" stopColor="#26C6A2"/>
+            </linearGradient>
+            <linearGradient id="hgr" x1="50%" y1="0%" x2="90%" y2="100%">
+              <stop offset="0%" stopColor="#42A5F5"/>
+              <stop offset="100%" stopColor="#4DD0C4"/>
+            </linearGradient>
+          </defs>
+          <polygon points="50,6 7,90 50,67" fill="url(#hgl)"/>
+          <polygon points="50,6 93,90 50,67" fill="url(#hgr)" opacity="0.92"/>
+        </svg>
+        <div>
+          <p style={{ color:"white", fontSize: landscape ? 15 : 17, fontWeight:600, letterSpacing:"-0.3px" }}>Aerorides</p>
+          <div className="flex items-center gap-1.5" style={{ marginTop:2 }}>
+            <div style={{ width:5, height:5, borderRadius:"50%", background:tracking?"#30d158":"rgba(255,255,255,0.18)", boxShadow:tracking?"0 0 5px #30d158":"none", transition:"all 0.4s" }}/>
+            <p style={{ color:"rgba(255,255,255,0.28)", fontSize:10, letterSpacing:"0.07em" }}>{tracking?"GPS AKTIV":"BEREIT"}</p>
+          </div>
         </div>
       </div>
       <button
