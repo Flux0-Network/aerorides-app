@@ -69,8 +69,30 @@ function Speedometer({ speed, max = 240 }: { speed: number; max?: number }) {
   );
 }
 
+// ─── Stat card ────────────────────────────────────────────────────────────────
+function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"10px 12px" }}>
+      <p style={{ color:"rgba(255,255,255,0.32)", fontSize:9, letterSpacing:"0.09em", marginBottom:5 }}>{label}</p>
+      <p style={{ color:accent??"white", fontSize:20, fontWeight:300, letterSpacing:"-0.8px", lineHeight:1 }}>{value}</p>
+    </div>
+  );
+}
+
+// ─── Map badge ────────────────────────────────────────────────────────────────
+function MapBadge({ count }: { count: number }) {
+  return (
+    <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-none" style={{ background:"rgba(0,0,0,0.65)", borderRadius:10, padding:"5px 10px", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ width:6, height:6, borderRadius:"50%", background:"#0a84ff", boxShadow:"0 0 5px #0a84ff" }}/>
+      <span style={{ color:"rgba(255,255,255,0.55)", fontSize:11, letterSpacing:"0.06em" }}>ROUTE</span>
+      {count > 0 && <span style={{ color:"rgba(255,255,255,0.28)", fontSize:10 }}>{count} Pkt.</span>}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function SpeedTracker() {
+  const [landscape, setLandscape] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(0);
@@ -84,6 +106,15 @@ export default function SpeedTracker() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTime = useRef<number | null>(null);
   const lastPoint = useRef<TrackPoint | null>(null);
+
+  // Detect orientation
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape)");
+    setLandscape(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setLandscape(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const stopTracking = useCallback(() => {
     if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
@@ -130,77 +161,84 @@ export default function SpeedTracker() {
   const fmt = (s: number) => [Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(v => String(v).padStart(2,"0")).join(":");
   const fmtDist = (m: number) => m >= 1000 ? `${(m/1000).toFixed(2)} km` : `${Math.round(m)} m`;
 
-  return (
-    <div
-      className="flex flex-row overflow-hidden"
-      style={{ width:"100dvw", height:"100dvh", background:"#000", fontFamily:"-apple-system,SF Pro Display,system-ui" }}
-    >
-      {/* ── LEFT: Tacho-Panel ── */}
-      <div
-        className="flex flex-col items-center justify-between shrink-0"
-        style={{ width:"42%", height:"100%", borderRight:"1px solid rgba(255,255,255,0.07)", padding:"16px 14px" }}
+  const stats = [
+    { label:"STRECKE",  value: fmtDist(distance) },
+    { label:"ZEIT",     value: fmt(elapsed) },
+    { label:"Ø KM/H",  value: avg.toFixed(1),      accent:"#0a84ff" },
+    { label:"MAX",      value: maxSpeed.toFixed(1), accent: maxSpeed>160?"#ff453a":maxSpeed>100?"#ff9f0a":"#30d158" },
+  ];
+
+  const header = (
+    <div className="flex items-center justify-between w-full shrink-0" style={{ padding: landscape ? "16px 14px 0" : "14px 20px 0" }}>
+      <div>
+        <p style={{ color:"white", fontSize: landscape ? 15 : 17, fontWeight:600, letterSpacing:"-0.3px" }}>Aerorides</p>
+        <div className="flex items-center gap-1.5" style={{ marginTop:2 }}>
+          <div style={{ width:5, height:5, borderRadius:"50%", background:tracking?"#30d158":"rgba(255,255,255,0.18)", boxShadow:tracking?"0 0 5px #30d158":"none", transition:"all 0.4s" }}/>
+          <p style={{ color:"rgba(255,255,255,0.28)", fontSize:10, letterSpacing:"0.07em" }}>{tracking?"GPS AKTIV":"BEREIT"}</p>
+        </div>
+      </div>
+      <button
+        onClick={tracking ? stopTracking : startTracking}
+        style={{ background:tracking?"rgba(255,69,58,0.15)":"rgba(10,132,255,0.15)", border:`1px solid ${tracking?"rgba(255,69,58,0.35)":"rgba(10,132,255,0.35)"}`, color:tracking?"#ff453a":"#0a84ff", borderRadius:22, padding: landscape ? "7px 16px" : "9px 22px", fontSize: landscape ? 12 : 14, fontWeight:500, cursor:"pointer", transition:"all 0.2s" }}
       >
-        {/* Header */}
-        <div className="w-full flex items-center justify-between">
-          <div>
-            <p style={{ color:"white", fontSize:15, fontWeight:600, letterSpacing:"-0.3px" }}>Aerorides</p>
-            <div className="flex items-center gap-1.5" style={{ marginTop:2 }}>
-              <div style={{ width:5, height:5, borderRadius:"50%", background:tracking?"#30d158":"rgba(255,255,255,0.18)", boxShadow:tracking?"0 0 5px #30d158":"none", transition:"all 0.4s" }}/>
-              <p style={{ color:"rgba(255,255,255,0.28)", fontSize:10, letterSpacing:"0.07em" }}>{tracking?"GPS AKTIV":"BEREIT"}</p>
-            </div>
-          </div>
-          <button
-            onClick={tracking ? stopTracking : startTracking}
-            style={{ background:tracking?"rgba(255,69,58,0.15)":"rgba(10,132,255,0.15)", border:`1px solid ${tracking?"rgba(255,69,58,0.35)":"rgba(10,132,255,0.35)"}`, color:tracking?"#ff453a":"#0a84ff", borderRadius:20, padding:"7px 16px", fontSize:12, fontWeight:500, cursor:"pointer", transition:"all 0.2s" }}
-          >
-            {tracking ? "Stop" : "Start"}
-          </button>
-        </div>
+        {tracking ? "Stop" : "Start"}
+      </button>
+    </div>
+  );
 
-        {/* Speedometer */}
-        <div className="relative flex items-center justify-center" style={{ flex:1, width:"100%", padding:"8px 0" }}>
-          <div className="absolute rounded-full" style={{ width:220, height:220, background:tracking?"radial-gradient(circle,rgba(10,132,255,0.13) 0%,transparent 68%)":"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 68%)", transition:"background 1s" }}/>
-          <div style={{ width:"min(100%,200px)", aspectRatio:"1" }}>
-            <Speedometer speed={speed}/>
-          </div>
-        </div>
-
-        {/* Stats 2×2 */}
-        <div className="grid grid-cols-2 w-full" style={{ gap:7 }}>
-          {[
-            { label:"STRECKE",  value: fmtDist(distance) },
-            { label:"ZEIT",     value: fmt(elapsed) },
-            { label:"Ø KM/H",  value: avg.toFixed(1),      accent:"#0a84ff" },
-            { label:"MAX",      value: maxSpeed.toFixed(1), accent: maxSpeed>160?"#ff453a":maxSpeed>100?"#ff9f0a":"#30d158" },
-          ].map(({ label, value, accent }) => (
-            <div key={label} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"10px 12px" }}>
-              <p style={{ color:"rgba(255,255,255,0.32)", fontSize:9, letterSpacing:"0.09em", marginBottom:5 }}>{label}</p>
-              <p style={{ color:accent??"white", fontSize:20, fontWeight:300, letterSpacing:"-0.8px", lineHeight:1 }}>{value}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div style={{ width:"100%", marginTop:6, background:"rgba(255,69,58,0.1)", border:"1px solid rgba(255,69,58,0.3)", borderRadius:12, padding:"8px 12px", color:"#ff453a", fontSize:11 }}>
-            {error}
-          </div>
-        )}
+  const tacho = (
+    <div className="relative flex items-center justify-center" style={{ flex:1, width:"100%" }}>
+      <div className="absolute rounded-full" style={{ width:220, height:220, background:tracking?"radial-gradient(circle,rgba(10,132,255,0.13) 0%,transparent 68%)":"radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 68%)", transition:"background 1s" }}/>
+      <div style={{ width: landscape ? "min(100%,180px)" : "min(100%,210px)", aspectRatio:"1" }}>
+        <Speedometer speed={speed}/>
       </div>
+    </div>
+  );
 
-      {/* ── RIGHT: Map ── */}
-      <div className="relative flex-1 h-full">
-        <RouteMap points={routePoints} current={currentPos}/>
+  const statsGrid = (
+    <div className="grid grid-cols-4 w-full shrink-0" style={{ gap:7, padding: landscape ? "0 14px 14px" : "0 14px" }}>
+      {stats.map(({ label, value, accent }) => (
+        <Stat key={label} label={label} value={value} accent={accent}/>
+      ))}
+    </div>
+  );
 
-        {/* Route badge */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-2 pointer-events-none" style={{ background:"rgba(0,0,0,0.65)", borderRadius:10, padding:"5px 10px", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ width:6, height:6, borderRadius:"50%", background:"#0a84ff", boxShadow:"0 0 5px #0a84ff" }}/>
-          <span style={{ color:"rgba(255,255,255,0.55)", fontSize:11, letterSpacing:"0.06em" }}>ROUTE</span>
-          {routePoints.length > 0 && (
-            <span style={{ color:"rgba(255,255,255,0.28)", fontSize:10 }}>{routePoints.length} Pkt.</span>
-          )}
-        </div>
+  const map = (
+    <div className="relative" style={
+      landscape
+        ? { flex:1, height:"100%" }
+        : { flex:1, margin:"10px 14px 14px", borderRadius:20, overflow:"hidden", border:"1px solid rgba(255,255,255,0.07)" }
+    }>
+      <RouteMap points={routePoints} current={currentPos}/>
+      <MapBadge count={routePoints.length}/>
+    </div>
+  );
+
+  // ── PORTRAIT ──────────────────────────────────────────────────────────────
+  if (!landscape) {
+    return (
+      <div className="flex flex-col overflow-hidden" style={{ width:"100dvw", height:"100dvh", background:"#000", fontFamily:"-apple-system,SF Pro Display,system-ui" }}>
+        {header}
+        {tacho}
+        {statsGrid}
+        {error && <div style={{ margin:"0 14px", background:"rgba(255,69,58,0.1)", border:"1px solid rgba(255,69,58,0.3)", borderRadius:12, padding:"8px 12px", color:"#ff453a", fontSize:11 }}>{error}</div>}
+        {map}
       </div>
+    );
+  }
+
+  // ── LANDSCAPE ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-row overflow-hidden" style={{ width:"100dvw", height:"100dvh", background:"#000", fontFamily:"-apple-system,SF Pro Display,system-ui" }}>
+      {/* Left: tacho + stats */}
+      <div className="flex flex-col items-center shrink-0" style={{ width:"42%", height:"100%", borderRight:"1px solid rgba(255,255,255,0.07)" }}>
+        {header}
+        {tacho}
+        {statsGrid}
+        {error && <div style={{ margin:"0 14px 10px", width:"calc(100% - 28px)", background:"rgba(255,69,58,0.1)", border:"1px solid rgba(255,69,58,0.3)", borderRadius:12, padding:"8px 12px", color:"#ff453a", fontSize:11 }}>{error}</div>}
+      </div>
+      {/* Right: map */}
+      {map}
     </div>
   );
 }
